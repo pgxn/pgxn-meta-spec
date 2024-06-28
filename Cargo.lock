@@ -142,6 +142,7 @@ name = "pgxn-meta-spec"
 version = "0.1.0"
 dependencies = [
  "boon",
+ "serde",
  "serde_json",
 ]
 

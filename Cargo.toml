@@ -15,3 +15,6 @@ exclude = [ ".github", ".gitattributes", "target", ".vscode", ".gitignore" ]
 [dev-dependencies]
 boon = "0.6"
 serde_json = "1.0"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
