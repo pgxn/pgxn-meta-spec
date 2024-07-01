@@ -943,3 +943,57 @@ fn test_v1_bugtracker() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
+#[test]
+fn test_v1_no_index() -> Result<(), Box<dyn Error>> {
+    // Load the schemas and compile the maintainer schema.
+    let mut compiler = new_compiler("schema/v1")?;
+    let mut schemas = Schemas::new();
+    let id = format!("{SCHEMA_BASE}/no_index.schema.json");
+    let idx = compiler.compile(&id, &mut schemas)?;
+
+    for valid_no_index in [
+        ("file only", json!({"file": ["x.txt"]})),
+        ("directory only", json!({"directory": [".git"]})),
+        ("file only", json!({"file": ["x.txt"]})),
+        ("both", json!({"file": ["x.txt"], "directory": [".git"]})),
+        ("two files", json!({"file": ["x.txt", "y.md"]})),
+        ("two dirs", json!({"directory": ["x", "y"]})),
+        ("x_ field", json!({"file": ["x.txt"], "x_Y": 0})),
+        ("X_ field", json!({"file": ["x.txt"], "X_y": 0})),
+    ] {
+        if let Err(e) = schemas.validate(&valid_no_index.1, idx) {
+            panic!("extension {} failed: {e}", valid_no_index.0);
+        }
+    }
+
+    for invalid_no_index in [
+        ("array", json!([])),
+        ("string", json!("web")),
+        ("empty string", json!("")),
+        ("true", json!(true)),
+        ("false", json!(false)),
+        ("null", json!(null)),
+        ("empty object", json!({})),
+        ("empty file", json!({"file": []})),
+        ("empty file string", json!({"file": [""]})),
+        ("file object", json!({"file": {}})),
+        ("file string", json!({"file": ""})),
+        ("file bool", json!({"file": true})),
+        ("file null", json!({"file": null})),
+        ("empty directory", json!({"directory": []})),
+        ("empty directory string", json!({"directory": [""]})),
+        ("directory object", json!({"directory": {}})),
+        ("directory string", json!({"directory": ""})),
+        ("directory bool", json!({"directory": true})),
+        ("directory null", json!({"directory": null})),
+        ("unknown field", json!({"file": ["x"], "hi": 0})),
+        ("bare x_", json!({"file": ["x"], "x_": 0})),
+    ] {
+        if schemas.validate(&invalid_no_index.1, idx).is_ok() {
+            panic!("{} unexpectedly passed!", invalid_no_index.0)
+        }
+    }
+
+    Ok(())
+}
