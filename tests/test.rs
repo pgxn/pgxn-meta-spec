@@ -12,6 +12,7 @@ const SCHEMA_ID: &str = "https://pgxn.org/meta/v1/distribution.schema.json";
 #[test]
 fn test_schema_v1() -> Result<(), Box<dyn Error>> {
     let mut compiler = Compiler::new();
+    compiler.enable_format_assertions();
     let mut loaded: HashMap<String, Vec<Value>> = HashMap::new();
 
     let paths = fs::read_dir("./schema/v1")?;
@@ -64,6 +65,7 @@ fn test_schema_v1() -> Result<(), Box<dyn Error>> {
 
 fn new_compiler(dir: &str) -> Result<Compiler, Box<dyn Error>> {
     let mut compiler = Compiler::new();
+    compiler.enable_format_assertions();
     let paths = fs::read_dir(dir)?;
     for path in paths {
         let path = path?.path();
@@ -501,7 +503,7 @@ fn test_v1_license() -> Result<(), Box<dyn Error>> {
         json!(["nonesuch"]),
         json!([]),
         json!({}),
-        json!({"foo": ["not a uri"]}),
+        json!({"foo": ":hello"}),
     ] {
         if schemas.validate(&invalid_license, idx).is_ok() {
             panic!("{} unexpectedly passed!", invalid_license)
@@ -597,6 +599,10 @@ fn test_v1_provides() -> Result<(), Box<dyn Error>> {
             "null file",
             json!({"x": {"file": null, "version": "1.0.0"}}),
         ),
+        (
+            "bare x_",
+            json!({"x": {"file": "x.txt", "version": "1.0.0", "x_": 0}}),
+        ),
     ] {
         if schemas.validate(&invalid_provides.1, idx).is_ok() {
             panic!("{} unexpectedly passed!", invalid_provides.0)
@@ -673,6 +679,14 @@ fn test_v1_extension() -> Result<(), Box<dyn Error>> {
         (
             "invalid field",
             json!({"file": "widget.sql", "version": "0.26.0", "foo": "hi", }),
+        ),
+        (
+            "bare x_",
+            json!( {
+                "file": "widget.sql",
+                "version": "0.26.0",
+                "x_": "hi",
+            }),
         ),
         // File
         ("no file", json!({"version": "0.26.0"})),
@@ -817,6 +831,113 @@ fn test_v1_maintainer() -> Result<(), Box<dyn Error>> {
     ] {
         if schemas.validate(&invalid_maintainer.1, idx).is_ok() {
             panic!("{} unexpectedly passed!", invalid_maintainer.0)
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
+fn test_v1_meta_spec() -> Result<(), Box<dyn Error>> {
+    // Load the schemas and compile the maintainer schema.
+    let mut compiler = new_compiler("schema/v1")?;
+    let mut schemas = Schemas::new();
+    let id = format!("{SCHEMA_BASE}/meta-spec.schema.json");
+    let idx = compiler.compile(&id, &mut schemas)?;
+
+    for valid_meta_spec in [
+        ("version 1.0.0 only", json!({"version": "1.0.0"})),
+        ("version 1.0.1 only", json!({"version": "1.0.1"})),
+        ("version 1.0.2 only", json!({"version": "1.0.2"})),
+        ("version 1.0.99 only", json!({"version": "1.0.99"})),
+        ("x key", json!({"version": "1.0.99", "x_y": true})),
+        ("X key", json!({"version": "1.0.99", "X_x": true})),
+        (
+            "version plus URL",
+            json!({"version": "1.0.0", "url": "https://pgxn.org/meta/spec.txt"}),
+        ),
+    ] {
+        if let Err(e) = schemas.validate(&valid_meta_spec.1, idx) {
+            panic!("extension {} failed: {e}", valid_meta_spec.0);
+        }
+    }
+
+    for invalid_meta_spec in [
+        ("array", json!([])),
+        ("string", json!("1.0.0")),
+        ("empty string", json!("")),
+        ("true", json!(true)),
+        ("false", json!(false)),
+        ("null", json!(null)),
+        ("empty object", json!({})),
+        ("unknown field", json!({"version": "1.0.0", "foo": "hi"})),
+        ("bare x_", json!({"version": "1.0.0", "x_": "hi"})),
+        ("version 1.1.0", json!({"version": "1.1.0"})),
+        ("version 2.0.0", json!({"version": "2.0.0"})),
+        (
+            "no_version",
+            json!({"url": "https://pgxn.org/meta/spec.txt"}),
+        ),
+        (
+            "invalid url",
+            json!({"version": "1.0.1", "url": "https://pgxn.org/meta/spec.html"}),
+        ),
+    ] {
+        if schemas.validate(&invalid_meta_spec.1, idx).is_ok() {
+            panic!("{} unexpectedly passed!", invalid_meta_spec.0)
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
+fn test_v1_bugtracker() -> Result<(), Box<dyn Error>> {
+    // Load the schemas and compile the maintainer schema.
+    let mut compiler = new_compiler("schema/v1")?;
+    let mut schemas = Schemas::new();
+    let id = format!("{SCHEMA_BASE}/bugtracker.schema.json");
+    let idx = compiler.compile(&id, &mut schemas)?;
+
+    for valid_bugtracker in [
+        ("web only", json!({"web": "https://foo.com"})),
+        ("mailto only", json!({"mailto": "hi@example.com"})),
+        (
+            "web and mailto",
+            json!({"web": "https://foo.com", "mailto": "hi@example.com"}),
+        ),
+        ("x key", json!({"web": "https://foo.com", "x_q": true})),
+        ("X key", json!({"web": "https://foo.com", "X_hi": true})),
+    ] {
+        if let Err(e) = schemas.validate(&valid_bugtracker.1, idx) {
+            panic!("extension {} failed: {e}", valid_bugtracker.0);
+        }
+    }
+
+    for invalid_bugtracker in [
+        ("array", json!([])),
+        ("string", json!("web")),
+        ("empty string", json!("")),
+        ("true", json!(true)),
+        ("false", json!(false)),
+        ("null", json!(null)),
+        ("empty object", json!({})),
+        ("unknown field", json!({"web": "https://foo.com", "foo": 0})),
+        ("bare x_", json!({"web": "https://foo.com", "x_": 0})),
+        ("web array", json!({"web": []})),
+        ("web object", json!({"web": {}})),
+        ("web bool", json!({"web": true})),
+        ("web null", json!({"web": null})),
+        ("web number", json!({"web": 52})),
+        ("mailto array", json!({"mailto": []})),
+        ("mailto object", json!({"mailto": {}})),
+        ("mailto bool", json!({"mailto": true})),
+        ("mailto null", json!({"mailto": null})),
+        ("mailto number", json!({"mailto": 52})),
+        ("invalid web url", json!({"web": "3ttp://a.com"})),
+    ] {
+        if schemas.validate(&invalid_bugtracker.1, idx).is_ok() {
+            panic!("{} unexpectedly passed!", invalid_bugtracker.0)
         }
     }
 

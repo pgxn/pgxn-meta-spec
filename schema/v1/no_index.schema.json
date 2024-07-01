@@ -32,7 +32,7 @@
     { "required": ["file", "directory"] }
   ],
   "patternProperties": {
-    "^[xX]_": {
+    "^[xX]_.": {
       "description": "Custom key"
     }
   },

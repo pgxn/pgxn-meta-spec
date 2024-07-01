@@ -349,7 +349,7 @@ are valid in the [List](#List) representation:
  mozilla_1_0  | Mozilla Public License, Version 1.0
  mozilla_1_1  | Mozilla Public License, Version 1.1
  openssl      | OpenSSL License
- perl_5       | The Perl 5 License (Artistic 1 &amp; GPL 1 or later)
+ perl_5       | The Perl 5 License (Artistic 1 & GPL 1 or later)
  postgresql   | The PostgreSQL License
  qpl_1_0      | Q Public License, Version 1.0
  ssleay       | Original SSLeay License

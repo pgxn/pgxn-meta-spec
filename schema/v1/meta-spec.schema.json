@@ -8,7 +8,7 @@
     "version": {
       "type": "string",
       "pattern": "^1[.]0[.][[:digit:]]+$",
-      "description": "The version of the PGXN Meta Spec against which the document was generated."
+      "description": "The version of the PGXN Meta Spec against which the document was generated. Must be 1.0.x."
     },
     "url": {
       "type": "string",
@@ -18,7 +18,7 @@
   },
   "required": ["version"],
   "patternProperties": {
-    "^[xX]_": {
+    "^[xX]_.": {
       "description": "Custom key"
     }
   },

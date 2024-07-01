@@ -29,7 +29,7 @@
   "minProperties": 1,
   "$comment": "Really should require at least one of the named properties; this allows for a single _x property. Good enough for now.",
   "patternProperties": {
-    "^[xX]_": {
+    "^[xX]_.": {
       "description": "Custom key"
     }
   },

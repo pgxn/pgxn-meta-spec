@@ -22,7 +22,7 @@
     { "required": ["web", "mailto"] }
   ],
   "patternProperties": {
-    "^[xX]_": {
+    "^[xX]_.": {
       "description": "Custom key"
     }
   },

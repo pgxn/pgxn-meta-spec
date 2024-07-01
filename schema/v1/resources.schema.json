@@ -14,7 +14,7 @@
     "repository": { "$ref": "repository.schema.json" }
   },
   "patternProperties": {
-    "^[xX]_": {
+    "^[xX]_.": {
       "description": "Custom key"
     }
   },
