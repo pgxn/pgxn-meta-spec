@@ -1,6 +1,6 @@
 .PHONY: test # Validate the JSON schema.
 test:
-	@cargo test -- --show-output
+	@cargo test
 
 .git/hooks/pre-commit:
 	@printf "#!/bin/sh\nmake lint\n" > $@
